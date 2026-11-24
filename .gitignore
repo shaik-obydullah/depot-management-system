@@ -126,4 +126,4 @@ _modules/*
 /phpunit.xml
 
 # Legacy local dump kept for reference only (contains sample data).
-docs/db_depot.sql
+docs
