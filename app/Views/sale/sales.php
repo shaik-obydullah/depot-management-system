@@ -15,25 +15,24 @@
                         <th class="text-right">Subtotal</th>
                         <th class="text-right">Discount</th>
                         <th class="text-right">Ground Total</th>
+                        <th class="text-right">Date</th>
                         <th class="text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php
-                    foreach ($all_sales as $v) {
-                        ?>
+                    <?php foreach ($all_sales as $v): ?>
                         <tr>
                             <td class="text-right"><?php echo esc($v->pk_sale_id) ?></td>
-                            <td class="text-right"><?php echo esc($v->sale_subtotal) ?></td>
-                            <td class="text-right"><?php echo esc($v->sale_discount) ?></td>
-                            <td class="text-right"><?php echo esc($v->ground_total) ?></td>
+                            <td class="text-right"><?php echo number_format((float) $v->sale_subtotal, 2) ?></td>
+                            <td class="text-right"><?php echo number_format((float) $v->sale_discount, 2) ?></td>
+                            <td class="text-right"><?php echo number_format((float) $v->ground_total, 2) ?></td>
+                            <td class="text-right"><?php echo esc($v->create_date) ?></td>
                             <td class="text-right">
-                                
+                                <a href="<?php echo base_url() ?>sales/view_sale/<?php echo esc($v->pk_sale_id) ?>" class="btn btn-info btn-sm">View</a>
+                                <a href="<?php echo base_url() ?>sales/add_sale/<?php echo esc($v->pk_sale_id) ?>" class="btn btn-primary btn-sm">Edit</a>
                             </td>
-                        </tr>  
-                        <?php
-                    }
-                    ?>
+                        </tr>
+                    <?php endforeach ?>
                 </tbody>
             </table>
         </div>

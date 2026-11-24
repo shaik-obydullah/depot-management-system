@@ -26,6 +26,12 @@
                 </ul>
                 <ul class="navbar-nav">
                     <li class="nav-item text-nowrap">
+                        <span class="navbar-text text-light mr-3">
+                            <?php echo esc(session()->get('user_name')) ?>
+                            (<?php echo esc(session()->get('user_type')) ?>)
+                        </span>
+                    </li>
+                    <li class="nav-item text-nowrap">
                         <form method="post" action="<?php echo base_url() ?>app/logout">
                             <?= csrf_field() ?>
                             <button type="submit" class="btn btn-link text-light">Sign out</button>
@@ -39,12 +45,14 @@
                 <li class="nav-item">
                     <a class="nav-link text-light" href="<?php echo base_url() ?>">Dashboard</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-light" href="<?php echo base_url() ?>product">Products</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-light" href="<?php echo base_url() ?>branch">Branch</a>
-                </li>
+                <?php if (is_superadmin()): ?>
+                    <li class="nav-item">
+                        <a class="nav-link text-light" href="<?php echo base_url() ?>product">Products</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-light" href="<?php echo base_url() ?>branch">Branch</a>
+                    </li>
+                <?php endif ?>
                 <li class="nav-item">
                     <a class="nav-link text-light" href="<?php echo base_url() ?>stock">Stocks</a>
                 </li>
@@ -54,15 +62,28 @@
                 <li class="nav-item">
                     <a class="nav-link text-light" href="<?php echo base_url() ?>cashbook">Cashbook</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-light" href="<?php echo base_url() ?>dealer">Dealer</a>
-                </li>
+                <?php if (is_superadmin()): ?>
+                    <li class="nav-item">
+                        <a class="nav-link text-light" href="<?php echo base_url() ?>dealer">Dealer</a>
+                    </li>
+                <?php endif ?>
                 <li class="nav-item">
                     <a class="nav-link text-light" href="<?php echo base_url() ?>sales">Sales</a>
                 </li>
             </ul>
         </nav>
+        <?php $flashError = session()->getFlashdata('error'); ?>
+        <?php if ($flashError): ?>
+            <div id="flash-error" class="col-md-10 mt-3 float-md-right">
+                <div class="alert alert-danger" role="alert"><?php echo esc($flashError) ?></div>
+            </div>
+        <?php endif ?>
         <?php echo $home ?>
+        <?php if (isset($pager)): ?>
+            <nav id="pager" class="col-md-10 mb-4 float-md-right">
+                <?= $pager->links() ?>
+            </nav>
+        <?php endif ?>
         <script src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
         <script>

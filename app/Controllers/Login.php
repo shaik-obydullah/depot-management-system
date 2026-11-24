@@ -23,7 +23,7 @@ class Login extends BaseController
                 null
             );
 
-            return $this->response->setBody('invalid');
+            return $this->plain('invalid');
         }
 
         $userId = (int) $user->pk_user_id;
@@ -31,12 +31,13 @@ class Login extends BaseController
         $session->set([
             'user_id'    => $userId,
             'user_name'  => $user->user_name,
+            'user_type'  => $user->user_type,
             'login_time' => time(),
         ]);
         $session->regenerate(true);
 
         $this->logActivity('success', $user->user_name . ' login success', $userId);
 
-        return $this->response->setBody('success');
+        return $this->plain('success');
     }
 }

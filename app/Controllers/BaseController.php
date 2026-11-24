@@ -15,7 +15,9 @@ use Psr\Log\LoggerInterface;
  */
 abstract class BaseController extends Controller
 {
-    protected $helpers = ['url'];
+    protected $helpers = ['url', 'roles'];
+
+    protected const PER_PAGE = 10;
 
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger): void
     {
@@ -38,6 +40,15 @@ abstract class BaseController extends Controller
             'activity_name' => $name,
             'created_by'    => $userId,
         ]);
+    }
+
+    /**
+     * Return a plain-text status string for the AJAX forms. This also keeps
+     * the debug toolbar from appending HTML in development.
+     */
+    protected function plain(string $body)
+    {
+        return $this->response->setContentType('text/plain')->setBody($body);
     }
 
     /**

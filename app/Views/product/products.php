@@ -4,7 +4,9 @@
         <div class="col-lg">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="<?php echo base_url() ?>product/add_product">Add Products</a></li>
+                    <?php if (is_superadmin()): ?>
+                        <li class="breadcrumb-item"><a href="<?php echo base_url() ?>product/add_product">Add Products</a></li>
+                    <?php endif ?>
                     <li class="breadcrumb-item active" aria-current="page">Products</li>
                 </ol>
             </nav>
@@ -28,7 +30,9 @@
                             <td class="text-right"><?php echo esc($v->product_weight) ?></td>
                             <td class="text-right"><?php echo esc($v->product_unit) ?></td>
                             <td class="text-right">
-                                <a href="<?php echo base_url() ?>product/add_product/<?php echo esc($v->pk_product_id) ?>" class="btn btn-primary btn-sm active" role="button" aria-pressed="true">Edit</a>
+                                <?php if (is_superadmin()): ?>
+                                    <a href="<?php echo base_url() ?>product/add_product/<?php echo esc($v->pk_product_id) ?>" class="btn btn-primary btn-sm active" role="button" aria-pressed="true">Edit</a>
+                                <?php endif ?>
                             </td>
                         </tr>  
                         <?php

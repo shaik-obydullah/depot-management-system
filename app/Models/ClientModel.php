@@ -43,4 +43,17 @@ class ClientModel extends Model
 
         return $builder->orderBy($this->primaryKey, 'DESC')->get()->getResult();
     }
+
+    public function paginateClients(int $perPage, ?string $type = null): array
+    {
+        $builder = $this->builder();
+
+        if ($type !== null) {
+            $builder->where('client_type', $type);
+        }
+
+        $builder->orderBy($this->primaryKey, 'DESC');
+
+        return $this->paginate($perPage);
+    }
 }

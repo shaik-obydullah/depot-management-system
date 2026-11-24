@@ -4,7 +4,9 @@
         <div class="col-lg">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="<?php echo base_url() ?>branch/add_branch">Add Branch</a></li>
+                    <?php if (is_superadmin()): ?>
+                        <li class="breadcrumb-item"><a href="<?php echo base_url() ?>branch/add_branch">Add Branch</a></li>
+                    <?php endif ?>
                     <li class="breadcrumb-item active" aria-current="page">Branches</li>
                 </ol>
             </nav>
@@ -30,7 +32,9 @@
                             <td><?php echo esc($v->client_email) ?></td>
                             <td><?php echo esc($v->client_address) ?></td>
                             <td class="text-right">
-                                <a href="<?php echo base_url() ?>branch/add_branch/<?php echo esc($v->pk_client_id) ?>" class="btn btn-primary btn-sm active" role="button" aria-pressed="true">Edit</a>
+                                <?php if (is_superadmin()): ?>
+                                    <a href="<?php echo base_url() ?>branch/add_branch/<?php echo esc($v->pk_client_id) ?>" class="btn btn-primary btn-sm active" role="button" aria-pressed="true">Edit</a>
+                                <?php endif ?>
                             </td>
                         </tr>  
                         <?php

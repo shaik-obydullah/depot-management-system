@@ -2,30 +2,60 @@
 
 namespace App\Controllers;
 
-use App\Models\ClientModel;
+use App\Libraries\SaleCalculator;
+use App\Models\ProductModel;
 use App\Models\SalesModel;
 
 /**
- * NOTE: the Sales workflow was already incomplete in the CI3 application:
- * the list reads tbl_sales while the save action wrote clients. Behaviour is
- * preserved here; completing the sale/detail flow is a separate task.
+ * Sales are recorded in tbl_sales with their line items in sale_details.
+ * Stock/cashbook movements remain separate, as in the legacy application.
  */
 class Sales extends BaseController
 {
     public function index(): string
     {
+        $model = model(SalesModel::class);
+        $sales = $model->paginateSales(self::PER_PAGE);
+
         return $this->renderPage('Sales', 'sale/sales', [
-            'all_sales' => model(SalesModel::class)->getSales(),
+            'all_sales' => $sales,
+            'pager'     => $model->pager,
         ]);
     }
 
-    public function addSale($edit = null): string
+    public function viewSale($id)
     {
-        $data = ['edit' => $edit];
+        $saleId = (int) $id;
+        $model  = model(SalesModel::class);
+        $sale   = $model->getSales($saleId);
 
-        if ($edit !== null) {
-            $data['title']     = 'Edit Sale';
-            $data['sale_info'] = model(SalesModel::class)->getSales((int) $edit);
+        if ($sale === null) {
+            return $this->response->setStatusCode(404)->setBody('Sale not found');
+        }
+
+        return $this->renderPage('Sale Details', 'sale/sale_details', [
+            'sale_info'   => $sale,
+            'sale_details' => $model->getDetails($saleId),
+        ]);
+    }
+
+    public function addSale($edit = null)
+    {
+        $saleId = $edit !== null ? (int) $edit : null;
+        $model  = model(SalesModel::class);
+        $data   = [
+            'edit'         => $saleId,
+            'all_products' => model(ProductModel::class)->getProducts(),
+        ];
+
+        if ($saleId !== null) {
+            $data['title']        = 'Edit Sale';
+            $data['sale_info']    = $model->getSales($saleId);
+            $data['sale_details'] = $model->getDetails($saleId);
+
+            if ($data['sale_info'] === null) {
+                return $this->response->setStatusCode(404)->setBody('Sale not found');
+            }
         } else {
             $data['title'] = 'Add Sale';
         }
@@ -35,40 +65,89 @@ class Sales extends BaseController
 
     public function saveSale($edit = null)
     {
-        $firstName = trim((string) $this->request->getPost('first_name'));
+        $itemsInput = $this->request->getPost('items');
 
-        if ($firstName === '') {
-            return $this->response->setBody('invalid');
+        if (! is_array($itemsInput)) {
+            return $this->plain('invalid');
         }
 
-        $data = [
-            'client_type'    => 'client',
-            'first_name'     => $firstName,
-            'last_name'      => (string) $this->request->getPost('last_name'),
-            'client_email'   => '',
-            'client_mobile'  => (string) $this->request->getPost('mobile'),
-            'client_address' => (string) $this->request->getPost('address'),
-        ];
+        $productModel = model(ProductModel::class);
+        $items        = [];
+
+        foreach ($itemsInput as $row) {
+            $productId = (int) ($row['product_id'] ?? 0);
+
+            if ($productId <= 0) {
+                continue;
+            }
+
+            $product = $productModel->getProducts($productId);
+            if ($product === null) {
+                return $this->plain('invalid');
+            }
+
+            $box      = max(0, (int) ($row['box'] ?? 0));
+            $quantity = max(0, (int) ($row['qty'] ?? 0));
+            $totalQty = ((int) $product->product_unit * $box) + $quantity;
+
+            if ($totalQty <= 0) {
+                continue;
+            }
+
+            $items[] = [
+                'fk_product_id'   => $productId,
+                'product_name'    => $product->product_name,
+                'product_quantity' => $totalQty,
+                'product_weight'  => (string) $product->product_weight,
+                'box_unit'        => (int) $product->product_unit,
+                'sale_price'      => max(0, (float) ($row['sale_price'] ?? 0)),
+            ];
+        }
+
+        if ($items === []) {
+            return $this->plain('invalid');
+        }
+
+        $totals = SaleCalculator::totals(
+            array_map(static fn (array $item): array => [
+                'quantity' => $item['product_quantity'],
+                'price'    => $item['sale_price'],
+            ], $items),
+            (float) $this->request->getPost('discount')
+        );
 
         $userId = (int) session()->get('user_id');
-        $model  = model(ClientModel::class);
+        $time   = date('H:i:s');
+        $date   = date('Y-m-d');
+        $saleId = $edit !== null ? (int) $edit : null;
 
-        if ($edit !== null) {
-            $data['update_time'] = date('H:i:s');
-            $data['update_date'] = date('Y-m-d');
-            $data['updated_by']  = $userId;
+        $sale = [
+            'sale_subtotal' => $totals['subtotal'],
+            'sale_discount' => $totals['discount'],
+            'ground_total'  => $totals['total'],
+        ];
 
-            $result = $model->update((int) $edit, $data);
-            $this->logActivity('warning', session()->get('user_name') . ' updated a sale. Which ID -' . $edit, $userId);
+        if ($saleId !== null) {
+            $sale['update_time'] = $time;
+            $sale['update_date'] = $date;
+            $sale['updated_by']  = $userId;
         } else {
-            $data['create_time'] = date('H:i:s');
-            $data['create_date'] = date('Y-m-d');
-            $data['created_by']  = $userId;
-
-            $result = $model->insert($data);
-            $this->logActivity('success', session()->get('user_name') . ' add a sale. Which ID -' . $model->getInsertID(), $userId);
+            $sale['create_time'] = $time;
+            $sale['create_date'] = $date;
+            $sale['created_by']  = $userId;
         }
 
-        return $this->response->setBody($result ? 'success' : 'invalid');
+        $savedId = model(SalesModel::class)->saveSale($sale, $items, $saleId);
+        if ($savedId === false) {
+            return $this->plain('invalid');
+        }
+
+        $this->logActivity(
+            $saleId !== null ? 'warning' : 'success',
+            session()->get('user_name') . ($saleId !== null ? ' updated a sale. Which ID -' : ' add a sale. Which ID -') . $savedId,
+            $userId
+        );
+
+        return $this->plain('success');
     }
 }

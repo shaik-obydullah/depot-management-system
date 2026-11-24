@@ -8,4 +8,9 @@ class DealerModel extends ClientModel
     {
         return $this->getClients($id, 'dealer');
     }
+
+    public function paginateDealers(int $perPage): array
+    {
+        return $this->paginateClients($perPage, 'dealer');
+    }
 }

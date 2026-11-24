@@ -29,17 +29,17 @@ class CashbookModel extends Model
 
     public function getCashbook(?array $args = null)
     {
-        $builder = $this->db->table($this->table);
-
-        if (isset($args['cash_in'])) {
-            $builder->where('cash_in IS NOT NULL', null, false);
-        } elseif (isset($args['cash_out'])) {
-            $builder->where('cash_out IS NOT NULL', null, false);
-        } else {
-            $builder->orderBy($this->primaryKey, 'DESC');
-        }
+        $builder = $this->scopedBuilder($args);
+        $builder->orderBy($this->primaryKey, 'DESC');
 
         return $builder->get()->getResult();
+    }
+
+    public function paginateCashbook(int $perPage, ?array $args = null): array
+    {
+        $this->scopedBuilder($args)->orderBy($this->primaryKey, 'DESC');
+
+        return $this->paginate($perPage);
     }
 
     public function saveCashbook(array $data): int
@@ -47,5 +47,21 @@ class CashbookModel extends Model
         $this->db->table($this->table)->insert($data);
 
         return $this->db->insertID();
+    }
+
+    /**
+     * Apply the cash-in/cash-out filters from the list pages.
+     */
+    private function scopedBuilder(?array $args)
+    {
+        $builder = $this->builder();
+
+        if (isset($args['cash_in'])) {
+            $builder->where('cash_in IS NOT NULL', null, false);
+        } elseif (isset($args['cash_out'])) {
+            $builder->where('cash_out IS NOT NULL', null, false);
+        }
+
+        return $builder;
     }
 }

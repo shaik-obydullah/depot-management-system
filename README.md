@@ -32,8 +32,14 @@ A small stock/inventory/cashbook admin app, upgraded from CodeIgniter 3 to
    For local development over plain HTTP, also set `cookie.secure = false` and
    `app.forceGlobalSecureRequests = false` in `.env`.
 
-3. Create an empty database, import `docs/schema.sql`, and (for a fresh install)
-   add an admin user with a password hash:
+3. Create an empty database, then either run the CI4 migrations or import
+   `docs/schema.sql`:
+
+   ```bash
+   php spark migrate
+   ```
+
+   For a fresh install, add an admin user with a password hash:
 
    ```bash
    php -r 'echo password_hash("change-me", PASSWORD_DEFAULT), PHP_EOL;'
@@ -71,8 +77,31 @@ A small stock/inventory/cashbook admin app, upgraded from CodeIgniter 3 to
 - Schema is committed as `docs/schema.sql` (structure only, InnoDB); the old
   phpMyAdmin dump with sample data is git-ignored.
 
-## Known remaining work
+## Follow-ups completed after the upgrade
 
-The Sales workflow was already incomplete in CI3 (the list reads `tbl_sales`
-while saves wrote `tbl_clients`) and is preserved as-is here. Finishing it,
-adding pagination/roles, and adding automated tests are follow-up tasks.
+- **Sales workflow:** `tbl_sales` plus `sale_details` are now written in one
+  transaction, with create/edit/view screens and per-line product snapshots.
+  Stock and cashbook movements are intentionally unaffected, matching the
+  legacy design.
+- **Pagination:** products, branches, dealers, stocks, inventory, cashbook and
+  sales lists use CI4's pager (10 rows per page), rendered by the shared layout.
+- **Roles:** product/branch/dealer write routes require `superadmin`; stock and
+  sales remain available to both roles. The role is stored in the session at
+  login, enforced by `App\Filters\RolesFilter`, and used to hide master-data
+  links/buttons. Non-authorized AJAX writes receive HTTP 403.
+- **Migrations:** `2026-11-24-100000_CreateDepotSchema.php` creates the same
+  structure as `docs/schema.sql`. It uses `CREATE TABLE IF NOT EXISTS`, so it is
+  safe to run once against a database imported from the SQL file.
+- **Tests/CI:** `vendor/bin/phpunit` covers app boot, role policy and sale
+  totals; `.github/workflows/ci.yml` runs lint-free syntax/route checks and the
+  suite on PHP 8.5 for pushes and pull requests to `main`.
+
+## Testing
+
+```bash
+vendor/bin/phpunit
+php spark routes
+```
+
+Database-dependent behaviour is verified manually with a disposable MariaDB
+container; see `docs/agents.md` for the conventions used by that flow.

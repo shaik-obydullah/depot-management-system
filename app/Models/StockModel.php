@@ -41,4 +41,18 @@ class StockModel extends Model
 
         return $builder->orderBy('tbl_stocks.pk_stock_id', 'DESC')->get()->getResult();
     }
+
+    public function paginateStocks(int $perPage): array
+    {
+        $builder = $this->builder();
+        $builder->select('tbl_stocks.*, tbl_clients.first_name, tbl_clients.last_name, '
+            . 'tbl_products.pk_product_id, tbl_products.product_name, '
+            . 'tbl_products.product_unit, tbl_products.product_weight');
+        $builder->join('tbl_clients', 'tbl_clients.pk_client_id = tbl_stocks.fk_branch_id', 'left');
+        $builder->join('tbl_products', 'tbl_products.pk_product_id = tbl_stocks.fk_product_id', 'left');
+
+        $builder->orderBy('tbl_stocks.pk_stock_id', 'DESC');
+
+        return $this->paginate($perPage);
+    }
 }

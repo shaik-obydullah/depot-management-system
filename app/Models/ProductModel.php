@@ -30,4 +30,9 @@ class ProductModel extends Model
 
         return $this->orderBy($this->primaryKey, 'DESC')->get()->getResult();
     }
+
+    public function paginateProducts(int $perPage): array
+    {
+        return $this->orderBy($this->primaryKey, 'DESC')->paginate($perPage);
+    }
 }

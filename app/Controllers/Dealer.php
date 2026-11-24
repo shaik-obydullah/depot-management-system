@@ -8,8 +8,11 @@ class Dealer extends BaseController
 {
     public function index(): string
     {
+        $model = model(DealerModel::class);
+
         return $this->renderPage('Dealers', 'dealer/dealers', [
-            'all_dealers' => model(DealerModel::class)->getDealers(),
+            'all_dealers' => $model->paginateDealers(self::PER_PAGE),
+            'pager'       => $model->pager,
         ]);
     }
 
@@ -32,7 +35,7 @@ class Dealer extends BaseController
         $firstName = trim((string) $this->request->getPost('first_name'));
 
         if ($firstName === '') {
-            return $this->response->setBody('invalid');
+            return $this->plain('invalid');
         }
 
         $data = [

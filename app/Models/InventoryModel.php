@@ -47,6 +47,17 @@ class InventoryModel extends Model
         return $builder->orderBy('tbl_inventories.pk_inventory_id', 'DESC')->get()->getResult();
     }
 
+    public function paginateInventories(int $perPage): array
+    {
+        $builder = $this->builder();
+        $builder->select('tbl_inventories.*, tbl_products.product_name, '
+            . 'tbl_products.product_unit, tbl_products.product_weight');
+        $builder->join('tbl_products', 'tbl_products.pk_product_id = tbl_inventories.fk_product_id', 'left');
+        $builder->orderBy('tbl_inventories.pk_inventory_id', 'DESC');
+
+        return $this->paginate($perPage);
+    }
+
     public function saveInventory(array $data): int
     {
         $this->db->table($this->table)->insert($data);

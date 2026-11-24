@@ -8,8 +8,11 @@ class Product extends BaseController
 {
     public function index(): string
     {
+        $model = model(ProductModel::class);
+
         return $this->renderPage('Products', 'product/products', [
-            'all_products' => model(ProductModel::class)->getProducts(),
+            'all_products' => $model->paginateProducts(self::PER_PAGE),
+            'pager'        => $model->pager,
         ]);
     }
 
@@ -43,7 +46,7 @@ class Product extends BaseController
         $name = trim((string) $this->request->getPost('name'));
 
         if ($name === '') {
-            return $this->response->setBody('invalid');
+            return $this->plain('invalid');
         }
 
         $data = [

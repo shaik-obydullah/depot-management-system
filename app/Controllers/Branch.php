@@ -8,8 +8,11 @@ class Branch extends BaseController
 {
     public function index(): string
     {
+        $model = model(ClientModel::class);
+
         return $this->renderPage('Branches', 'branch/branches', [
-            'all_branches' => model(ClientModel::class)->getClients(null, 'branch'),
+            'all_branches' => $model->paginateClients(self::PER_PAGE, 'branch'),
+            'pager'        => $model->pager,
         ]);
     }
 
@@ -32,7 +35,7 @@ class Branch extends BaseController
         $name = trim((string) $this->request->getPost('first_name'));
 
         if ($name === '') {
-            return $this->response->setBody('invalid');
+            return $this->plain('invalid');
         }
 
         $data = [

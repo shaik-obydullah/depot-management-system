@@ -23,9 +23,12 @@ class Cashbook extends BaseController
 
     private function cashbookPage(string $title, array $args): string
     {
+        $model = model(CashbookModel::class);
+
         return $this->renderPage($title, 'cashbook/cashbook', [
             'args'     => $args,
-            'cashbook' => model(CashbookModel::class)->getCashbook($args),
+            'cashbook' => $model->paginateCashbook(self::PER_PAGE, $args),
+            'pager'    => $model->pager,
         ]);
     }
 }

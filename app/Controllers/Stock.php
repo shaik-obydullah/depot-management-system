@@ -12,8 +12,11 @@ class Stock extends BaseController
 {
     public function index(): string
     {
+        $model = model(StockModel::class);
+
         return $this->renderPage('Stocks', 'stock/stocks', [
-            'all_stocks' => model(StockModel::class)->getStocks(),
+            'all_stocks' => $model->paginateStocks(self::PER_PAGE),
+            'pager'      => $model->pager,
         ]);
     }
 
@@ -45,7 +48,7 @@ class Stock extends BaseController
         $product   = model(ProductModel::class)->getProducts($productId);
 
         if ($product === null) {
-            return $this->response->setBody('invalid');
+            return $this->plain('invalid');
         }
 
         $box       = (int) $this->request->getPost('box');
@@ -73,7 +76,7 @@ class Stock extends BaseController
         if (! $stockId) {
             $db->transRollback();
 
-            return $this->response->setBody('invalid');
+            return $this->plain('invalid');
         }
 
         $this->logActivity(
@@ -106,7 +109,7 @@ class Stock extends BaseController
 
         $db->transComplete();
 
-        return $this->response->setBody('success');
+        return $this->plain('success');
     }
 
     public function editStock($edit): string
@@ -128,7 +131,7 @@ class Stock extends BaseController
         $product   = model(ProductModel::class)->getProducts($productId);
 
         if ($product === null || $stockId === 0) {
-            return $this->response->setBody('invalid');
+            return $this->plain('invalid');
         }
 
         $time      = date('H:i:s');
@@ -158,7 +161,7 @@ class Stock extends BaseController
         if (! $result) {
             $db->transRollback();
 
-            return $this->response->setBody('invalid');
+            return $this->plain('invalid');
         }
 
         $this->logActivity(
@@ -191,6 +194,6 @@ class Stock extends BaseController
 
         $db->transComplete();
 
-        return $this->response->setBody('success');
+        return $this->plain('success');
     }
 }
